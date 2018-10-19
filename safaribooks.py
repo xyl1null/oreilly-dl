@@ -182,7 +182,7 @@ class SafariBooks:
     HEADERS = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
         "accept-encoding": "gzip, deflate",
-        "accept-language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+        "accept-language": "en-gb, en; q=0.9",
         "cache-control": "no-cache",
         "cookie": "",
         "pragma": "no-cache",
@@ -224,9 +224,13 @@ class SafariBooks:
                     "</rootfiles>" \
                     "</container>"
 
+    # cover modified, iBooks supported
+    # "<meta name=\"cover\" content=\"{8}\"/>\n"
+    # "<meta name=\"cover\" content=\"cover-image\"/>\n"
+    # "<item id=\"cover-image\" href=\"{8}\" media-type=\"image/png\" properties=\"cover-image\"/>\n" \
     # Format: ID, Title, Authors, Description, Subjects, Publisher, Rights, Date, CoverId, MANIFEST, SPINE, CoverUrl
     CONTENT_OPF = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
-                  "<package xmlns=\"http://www.idpf.org/2007/opf\" unique-identifier=\"bookid\" version=\"2.0\" >\n" \
+                  "<package xmlns=\"http://www.idpf.org/2007/opf\" unique-identifier=\"bookid\" version=\"3.1\" >\n" \
                   "<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\" " \
                   " xmlns:opf=\"http://www.idpf.org/2007/opf\">\n"\
                   "<dc:title>{1}</dc:title>\n" \
@@ -238,7 +242,7 @@ class SafariBooks:
                   "<dc:language>en-US</dc:language>\n" \
                   "<dc:date>{7}</dc:date>\n" \
                   "<dc:identifier id=\"bookid\">{0}</dc:identifier>\n" \
-                  "<meta name=\"cover\" content=\"{8}\"/>\n" \
+                  "<meta name=\"cover\" content=\"cover-image\"/>\n" \
                   "</metadata>\n" \
                   "<manifest>\n" \
                   "<item id=\"ncx\" href=\"toc.ncx\" media-type=\"application/x-dtbncx+xml\" />\n" \
@@ -247,6 +251,7 @@ class SafariBooks:
                   "<spine toc=\"ncx\">\n{10}</spine>\n" \
                   "<guide><reference href=\"{11}\" title=\"Cover\" type=\"cover\" /></guide>\n" \
                   "</package>"
+
 
     # Format: ID, Depth, Title, Author, NAVMAP
     TOC_NCX = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
@@ -323,21 +328,21 @@ class SafariBooks:
         self.display.info("Downloading book contents... (%s chapters)" % len(self.book_chapters), state=True)
         self.BASE_HTML = self.BASE_01_HTML + (self.KINDLE_HTML if not args.no_kindle else "") + self.BASE_02_HTML
 
-        self.cover = False
+        # self.cover = False
         self.get()
-        if not self.cover:
-            self.cover = self.get_default_cover()
-            cover_html = self.parse_html(
-                html.fromstring("<div id=\"sbo-rt-content\"><img src=\"Images/{0}\"></div>".format(self.cover)), True
-            )
-
-            self.book_chapters = [{
-                "filename": "default_cover.xhtml",
-                "title": "Cover"
-            }] + self.book_chapters
-
-            self.filename = self.book_chapters[0]["filename"]
-            self.save_page_html(cover_html)
+        # if not self.cover:
+        #     self.cover = self.get_cover()
+        #     cover_html = self.parse_html(
+        #         html.fromstring("<div id=\"sbo-rt-content\"><img src=\"Images/{0}\"></div>".format(self.cover)), True
+        #     )
+        #
+        #     self.book_chapters = [{
+        #         "filename": "cover.xhtml",
+        #         "title": "Cover"
+        #     }] + self.book_chapters
+        #
+        #     self.filename = self.book_chapters[0]["filename"]
+        #     self.save_page_html(cover_html)
 
         self.css_done_queue = Queue(0) if "win" not in sys.platform else WinQueue()
         self.display.info("Downloading book CSSs... (%s files)" % len(self.css), state=True)
@@ -508,18 +513,18 @@ class SafariBooks:
         result += response["results"]
         return result + (self.get_book_chapters(page + 1) if response["next"] else [])
 
-    def get_default_cover(self):
-        response = self.requests_provider(self.book_info["cover"], update_cookies=False, stream=True)
-        if response == 0:
-            self.display.error("Error trying to retrieve the cover: %s" % self.book_info["cover"])
-            return False
-
-        file_ext = response.headers["Content-Type"].split("/")[-1]
-        with open(os.path.join(self.images_path, "default_cover." + file_ext), 'wb') as i:
-            for chunk in response.iter_content(1024):
-                i.write(chunk)
-
-        return "default_cover." + file_ext
+    # def get_default_cover(self):
+    #     response = self.requests_provider(self.book_info["cover"], update_cookies=False, stream=True)
+    #     if response == 0:
+    #         self.display.error("Error trying to retrieve the cover: %s" % self.book_info["cover"])
+    #         return False
+    #
+    #     file_ext = response.headers["Content-Type"].split("/")[-1]
+    #     with open(os.path.join(self.images_path, "default_cover." + file_ext), 'wb') as i:
+    #         for chunk in response.iter_content(1024):
+    #             i.write(chunk)
+    #
+    #     return "default_cover." + file_ext
 
     def get_html(self, url):
         response = self.requests_provider(url)
@@ -877,6 +882,9 @@ class SafariBooks:
             manifest.append("<item id=\"style_{0:0>2}\" href=\"Styles/Style{0:0>2}.css\" "
                             "media-type=\"text/css\" />".format(i))
 
+        #
+        manifest.append("<item id=\"cover-image\" href=\"{0}\" media-type=\"image/png\" properties=\"cover-image\" />n".format(self.cover))
+
         authors = "\n".join("<dc:creator opf:file-as=\"{0}\" opf:role=\"aut\">{0}</dc:creator>".format(
             escape(aut["name"])
         ) for aut in self.book_info["authors"])
@@ -965,13 +973,14 @@ class SafariBooks:
         open(os.path.join(self.BOOK_PATH, "OEBPS", "toc.ncx"), "wb").write(
             self.create_toc().encode("utf-8", "xmlcharrefreplace")
         )
-
-        zip_file = os.path.join(PATH, "Books", self.book_id)
+        book_name = self.book_title + self.book_id
+        print(book_name)
+        zip_file = os.path.join(PATH, "Books", self.book_title)
         if os.path.isfile(zip_file + ".zip"):
             os.remove(zip_file + ".zip")
 
         shutil.make_archive(zip_file, 'zip', self.BOOK_PATH)
-        os.rename(zip_file + ".zip", os.path.join(self.BOOK_PATH, self.book_id) + ".epub")
+        os.rename(zip_file + ".zip", os.path.join(self.BOOK_PATH, self.book_title) + ".epub")
 
 
 # MAIN
