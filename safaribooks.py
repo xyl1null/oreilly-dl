@@ -13,7 +13,7 @@ from html import escape
 from random import random
 from multiprocessing import Process, Queue, Value
 from urllib.parse import urljoin, urlsplit, urlparse
-
+from urllib.request import urlopen
 
 PATH = os.path.dirname(os.path.realpath(__file__))
 COOKIES_FILE = os.path.join(PATH, "cookies.json")
@@ -328,10 +328,10 @@ class SafariBooks:
         self.display.info("Downloading book contents... (%s chapters)" % len(self.book_chapters), state=True)
         self.BASE_HTML = self.BASE_01_HTML + (self.KINDLE_HTML if not args.no_kindle else "") + self.BASE_02_HTML
 
-        # self.cover = False
+        self.cover = []
         self.get()
         # if not self.cover:
-        #     self.cover = self.get_cover()
+        #     self.cover = self.get_default_cover()
         #     cover_html = self.parse_html(
         #         html.fromstring("<div id=\"sbo-rt-content\"><img src=\"Images/{0}\"></div>".format(self.cover)), True
         #     )
@@ -856,6 +856,7 @@ class SafariBooks:
         else:
             self._start_multiprocessing(self._thread_download_images, self.images)
 
+    @property
     def create_content_opf(self):
         self.css = next(os.walk(self.css_path))[2]
         self.images = next(os.walk(self.images_path))[2]
@@ -882,8 +883,9 @@ class SafariBooks:
             manifest.append("<item id=\"style_{0:0>2}\" href=\"Styles/Style{0:0>2}.css\" "
                             "media-type=\"text/css\" />".format(i))
 
-        #
-        manifest.append("<item id=\"cover-image\" href=\"{0}\" media-type=\"image/png\" properties=\"cover-image\" />n".format(self.cover))
+        # local method
+        res = self.create_cover()
+        manifest.append("<item id=\"cover-image\" href=\"{0}\" media-type=\"image/png\" properties=\"cover-image\" />n".format(res))
 
         authors = "\n".join("<dc:creator opf:file-as=\"{0}\" opf:role=\"aut\">{0}</dc:creator>".format(
             escape(aut["name"])
@@ -955,6 +957,17 @@ class SafariBooks:
             navmap
         )
 
+    def create_cover(self):
+
+        url = urljoin(self.api_url, "/api/v1/book/{0}/chapter/cover.xhtml".format(self.book_id))
+        response = self.requests_provider(url)
+        response = response.json()
+        imgAttrib = response['images']
+        lst2str = "".join(list(map(str, imgAttrib)))
+        print(lst2str)
+        return "Images/" + lst2str[6:]
+
+
     def create_epub(self):
         open(os.path.join(self.BOOK_PATH, "mimetype"), "w").write("application/epub+zip")
         meta_info = os.path.join(self.BOOK_PATH, "META-INF")
@@ -968,13 +981,12 @@ class SafariBooks:
             self.CONTAINER_XML.encode("utf-8", "xmlcharrefreplace")
         )
         open(os.path.join(self.BOOK_PATH, "OEBPS", "content.opf"), "wb").write(
-            self.create_content_opf().encode("utf-8", "xmlcharrefreplace")
+            self.create_content_opf.encode("utf-8", "xmlcharrefreplace")
         )
         open(os.path.join(self.BOOK_PATH, "OEBPS", "toc.ncx"), "wb").write(
             self.create_toc().encode("utf-8", "xmlcharrefreplace")
         )
-        book_name = self.book_title + self.book_id
-        print(book_name)
+
         zip_file = os.path.join(PATH, "Books", self.book_title)
         if os.path.isfile(zip_file + ".zip"):
             os.remove(zip_file + ".zip")
