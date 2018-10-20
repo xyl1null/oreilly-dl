@@ -959,13 +959,19 @@ class SafariBooks:
 
     def create_cover(self):
 
-        url = urljoin(self.api_url, "/api/v1/book/{0}/chapter/cover.xhtml".format(self.book_id))
+        url = urljoin(self.api_url, "/api/v1/book/{0}/".format(self.book_id))
         response = self.requests_provider(url)
-        response = response.json()
-        imgAttrib = response['images']
+        parsed = response.json()
+        for i in parsed['chapters']:
+            if 'cover.' in i or 'Cover.' in i:
+                cover_url = i
+                break
+
+        cover_response = self.requests_provider(cover_url)
+        cover_parsed = cover_response.json()
+        imgAttrib = cover_parsed['images']
         lst2str = "".join(list(map(str, imgAttrib)))
-        print(lst2str)
-        return "Images/" + lst2str[6:]
+        return "Images/" + lst2str.split('/')[-1]
 
 
     def create_epub(self):
