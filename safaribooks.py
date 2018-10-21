@@ -148,7 +148,7 @@ class Display:
         self.info("Done: %s\n\n"
                   "    If you like it, please * this project on GitHub to make it known:\n"
                   "        https://github.com/lorenzodifuccia/safaribooks\n"
-                  "    e don't forget to renew your Safari Books Online subscription:\n"
+                  "    And don't forget to renew your Safari Books Online subscription at:\n"
                   "        https://www.safaribooksonline.com/signup/\n\n" % epub_file +
                   self.SH_BG_RED + "[!]" + self.SH_DEFAULT + " Bye!!")
 
@@ -357,7 +357,7 @@ class SafariBooks:
         if not args.no_cookies:
             json.dump(self.cookies, open(COOKIES_FILE, "w"))
 
-        self.display.done(os.path.join(self.BOOK_PATH, self.book_id + ".epub"))
+        self.display.done(os.path.join(self.BOOK_PATH, self.book_title + ".epub"))
         self.display.unregister()
 
         if not self.display.in_error and not args.log:
@@ -958,9 +958,7 @@ class SafariBooks:
         )
 
     def create_cover(self):
-
-        url = urljoin(self.api_url, "/api/v1/book/{0}/".format(self.book_id))
-        response = self.requests_provider(url)
+        response = self.requests_provider(self.api_url)
         parsed = response.json()
         for i in parsed['chapters']:
             if 'cover.' in i or 'Cover.' in i:
