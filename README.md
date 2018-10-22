@@ -9,26 +9,24 @@ I'm not responsible for the use of this program, which is for *personal* and *ed
     - META-INT
     - mimetype
     - content.opf
-    
   * [Usage](#usage)
     - [Program options](#program-options)
 ## EPUB FORMAT:
 
 The EPUB® format provides a means of representing, packaging and encoding structured and semantically enhanced Web content — including HTML, CSS, SVG and other resources — for distribution in a single-file container.
-  * META-INF
-    container.xml
-    ```
+  * META-INF _(container.xml)_
+  ```
     <?xml version="1.0" encoding="UTF-8"?>
     <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
       <rootfiles>
         <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
       </rootfiles>
     </container>
-    ```
+  ```
   * mimetype
-    ```
-    application/epub+zip
-    ```
+  ```
+   application/epub+zip
+  ```
   * content.opf
   ```
     <?xml version="1.0" encoding="UTF-8"?>
@@ -61,6 +59,8 @@ The EPUB® format provides a means of representing, packaging and encoding struc
      </guide>
     </package>
   ```
+And EPUB is basically a compressed combination of all files above plus other meta-data collections, however here comes another problem where python's `shutil.make_archive(zip)` works in apple's Books whilst unix's zip system doesn't. (~~There has to be some connections between there two, very peculiar yet I'm curious to know, gotta dig it deeper). ~~
+
 For more info on EPUB, please check [here](http://www.idpf.org/epub3/latest/packages)
 
 ## Usage:
