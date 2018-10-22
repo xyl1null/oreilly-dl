@@ -59,7 +59,7 @@ The EPUB® format provides a means of representing, packaging and encoding struc
      </guide>
     </package>
   ```
-And EPUB is basically a compressed combination of all files above plus other meta-data collections, however here comes another problem where python's `shutil.make_archive(zip)` works in apple's Books whilst unix's zip system doesn't. (~~There has to be some connections between there two, very peculiar yet I'm curious to know, gotta dig it deeper). ~~
+And EPUB is basically a compressed combination of all files above plus other meta-data collections, however here comes another problem where python's `shutil.make_archive(zip)` works in apple's Books whilst unix's zip system doesn't. <s>(There has to be some connections between there two, very peculiar yet I'm curious to know, gotta dig it deeper).</s>
 
 For more info on EPUB, please check [here](http://www.idpf.org/epub3/latest/packages)
 
