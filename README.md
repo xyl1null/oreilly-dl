@@ -1,47 +1,80 @@
 # SafariBooks
-Download and generate *EPUB* of your favorite books from [*Safari Books Online*](https://www.safaribooksonline.com) library.  
-I'm not responsible for the use of this program, this is only for *personal* and *educational* purpose.  
+This is a fork from lorenzodifuccia's [repo](https://github.com/lorenzodifuccia/safaribooks).
+
+Download and generate *EPUB* of your favourite books from [*Safari Books Online*](https://www.safaribooksonline.com).  
+I'm not responsible for the use of this program, which is for *personal* and *educational* purposes only.  
 
 ## Overview:
-  * [Requirements & Setup](#requirements--setup)
+  * [EPUB Format](#epubformat)
+    - [META-INT](#meta-inf)
+    - [mimetype](#mimetype)
+    - [content.opf](content.opf)
+    
   * [Usage](#usage)
-  * [Example: Download *Test-Driven Development with Python, 2nd Edition*](#download-test-driven-development-with-python-2nd-edition)
-  * [Example: Use or not the `--no-kindle` option](#use-or-not-the---no-kindle-option)
+  * - [Program options]()
+## EPUB FORMAT
 
-## Requirements & Setup:
-```shell
-$ git clone https://github.com/lorenzodifuccia/safaribooks.git
+The EPUB® format provides a means of representing, packaging and encoding structured and semantically enhanced Web content — including HTML, CSS, SVG and other resources — for distribution in a single-file container.
+  * META-INF
+    - container.xml
+    ```
+    <?xml version="1.0" encoding="UTF-8"?>
+    <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+      <rootfiles>
+        <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
+      </rootfiles>
+    </container>
+    ```
+  * mimetype
+    ```
+    application/epub+zip
+    ```
+  * content.opf
+  ```
+    <?xml version="1.0" encoding="UTF-8"?>
+    <package xmlns="http://www.idpf.org/2007/opf"
+           xmlns:redirect="http://xml.apache.org/xalan/redirect"
+           version="3.1"
+           unique-identifier="bookid">
+     <metadata xmlns:opf="http://www.idpf.org/2007/opf"
+               xmlns:dc="http://purl.org/dc/elements/1.1/">
+        <dc:identifier id="bookid">XXXXXXXXXXXXX</dc:identifier>
+        ...
+        <meta name="cover" content="cover-image"/>
+        ...
+     </metadata>
+     <manifest>
+        <item id="css" href="../css" media-type="text/css"/>
+        <item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/>
+        <item id="cover-image"
+              href="images/cover.jpg"
+              media-type="image/jpeg"
+              properties="cover-image"/>
+        ...
+     </manifest>
+     <spine toc="ncx">
+      <itemref idref="f_0077" />
+      ...
+     </spine>
+     <guide>
+        <reference type="cover" title="Cover" href="cover.xhtml"/>
+     </guide>
+    </package>
+  ```
+For more info on EPUB, please check [here](http://www.idpf.org/epub3/latest/packages)
+
+## Usage:
+```
+$ git clone https://github.com/lorenzodifuccia/safaribooks.git or
+$ git clone https://github.com/shawneau/safaribooks.git
 Cloning into 'safaribooks'...
 
-$ cd safaribooks/
+$ cd safaribooks
 $ pip3 install -r requirements.txt
 
-OR
-
-$ pipenv install && pipenv shell
-```  
-
-The program depends of only two **Python 3** modules:
-```python3
-lxml>=4.1.1
-requests>=2.18.4
 ```
-  
-## Usage:
-It's really simple to use, just choose a book from the library and replace in the following command:
-  * X-es with its ID, 
-  * `email:password` with your own. 
-
-```shell
-$ python3 safaribooks.py --cred "account_mail@mail.com:password01" XXXXXXXXXXXXX
-```
-
-The ID is the digits that you find in the URL of the book description page:  
-`https://www.safaribooksonline.com/library/view/book-name/XXXXXXXXXXXXX/`  
-Like: `https://www.safaribooksonline.com/library/view/test-driven-development-with/9781491958698/`  
-  
 #### Program options:
-```shell
+```
 $ python3 safaribooks.py --help
 usage: safaribooks.py [--cred <EMAIL:PASS>] [--no-cookies] [--no-kindle]
                       [--preserve-log] [--help]
@@ -68,84 +101,21 @@ optional arguments:
                        isn't any error.
   --help               Show this help message.
 ```
-  
-The first time you use the program, you'll have to specify your Safari Books Online account credentials (look [`here`](/../../issues/15) for special character).
-The next times you'll download a book, before session expires, you can omit the credential, because the program save your session cookies in a file called `cookies.json` (for **SSO** look the file format [`here`](/../../issues/2#issuecomment-367726544)). 
-  
-Pay attention if you use a shared PC, because everyone that has access to your files can steal your session. 
-If you don't want to cache the cookies, just use the `--no-cookies` option and provide all time your `--cred`.
 
-You can configure proxies by setting on your system the environment variables `HTTP_PROXY` and `HTTPS_PROXY`.
-
-The program default options are thought for ensure best compatibilities for who want to export the `EPUB` to E-Readers like Amazon Kindle. If you want to do it, I suggest you to convert the `EPUB` to `AZW3` with [Calibre](https://calibre-ebook.com/).  
-You can also convert the book to `MOBI` and if you'll do it with Calibre be sure to select `Ignore margins` in the conversion options:  
-  
-![Calibre IgnoreMargins](https://github.com/lorenzodifuccia/cloudflare/raw/master/Images/safaribooks/safaribooks_calibre_IgnoreMargins.png "Select Ignore margins")  
-
-In the other hand, if you're not going to export the `EPUB`, you can use the `--no-kindle` option to remove the CSS that blocks overflow on `table` and `pre` elements, see below in the examples.  
-  
-## Examples:
-  * ## Download [Test-Driven Development with Python, 2nd Edition](https://www.safaribooksonline.com/library/view/test-driven-development-with/9781491958698/):  
-    ```shell
-    $ python3 safaribooks.py --cred "XXXX@gmail.com:XXXXX" 9781491958698
-
-           ____     ___         _ 
-          / __/__ _/ _/__ _____(_)
-         _\ \/ _ `/ _/ _ `/ __/ / 
-        /___/\_,_/_/ \_,_/_/ /_/  
-          / _ )___  ___  / /__ ___
-         / _  / _ \/ _ \/  '_/(_-<
-        /____/\___/\___/_/\_\/___/
-
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    [-] Logging into Safari Books Online...
-    [*] Retrieving book info... 
-    [-] Title: Test-Driven Development with Python, 2nd Edition                     
-    [-] Authors: Harry J.W. Percival                                                
-    [-] Identifier: 9781491958698                                                   
-    [-] ISBN: 9781491958704                                                         
-    [-] Publishers: O'Reilly Media, Inc.                                            
-    [-] Rights: Copyright © O'Reilly Media, Inc.                                    
-    [-] Description: By taking you through the development of a real web application 
-    from beginning to end, the second edition of this hands-on guide demonstrates the 
-    practical advantages of test-driven development (TDD) with Python. You’ll learn 
-    how to write and run tests before building each part of your app, and then develop
-    the minimum amount of code required to pass those tests. The result? Clean code
-    that works.In the process, you’ll learn the basics of Django, Selenium, Git, 
-    jQuery, and Mock, along with curre...
-    [-] Release Date: 2017-08-18
-    [-] URL: https://www.safaribooksonline.com/library/view/test-driven-development-with/9781491958698/
-    [*] Retrieving book chapters...                                                          
-    [*] Output directory:                                                           
-        /XXXX/XXXX/Books/Test-Driven Development with Python, 2nd Edition
-    [-] Downloading book contents... (73 chapters)                                               
-        [#########################################----------------------------]  60%
-    ...
-    [-] Creating EPUB file...                                                       
-    [*] Done: Test-Driven Development with Python, 2nd Edition.epub                 
-
-        If you like it, please * this project on GitHub to make it known:
-            https://github.com/lorenzodifuccia/safaribooks
-        e don't forget to renew your Safari Books Online subscription:
-            https://www.safaribooksonline.com/signup/
-
-    [!] Bye!!
-    ```  
-     The result will be (opening the `EPUB` file with Calibre):  
-
-    ![Book Appearance](https://github.com/lorenzodifuccia/cloudflare/raw/master/Images/safaribooks/safaribooks_example01_TDD.png "Book opened with Calibre")  
+For the first time users, you'll have to specify your SafariBooksOnline account credentials, which is in the format of   
+```
+$ python3 safaribooks.py --cred "account@email.com:password" XXXXXXXXXXXXX
+```
+  * Xs indicate the 13-digit ISBN number, which is available in the Book url, e.g.
+       `https://www.safaribooksonline.com/library/view/how_to_build_a_harem/6666666666666/`
+    *Notice* Sometimes ISBN in the book description page doesn't correspond to the url, so always trust the latter.
+  * `email:password` with your own. 
+    *Notice* Use a combination of alphanumerical characters. 
  
-  * ## Use or not the `--no-kindle` option:
-    ```bash
-    $ python3 safaribooks.py --no-kindle 9781491958698
-    ```  
-    On the left book created with `--no-kindle` option, on the right without (default):  
-    
-    ![NoKindle Option](https://github.com/lorenzodifuccia/cloudflare/raw/master/Images/safaribooks/safaribooks_example02_NoKindle.png "Version compare")  
-    
+Later, you're free to omit the --cred inputs using:
+```
+$ python3 safaribooks.py XXXXXXXXXXXXX
+```
 ---  
   
-## Thanks!!
-For any kind of problem, please don't hesitate to open an issue here on *GitHub*.  
-  
-*Lorenzo Di Fuccia*
+## Cheers!
