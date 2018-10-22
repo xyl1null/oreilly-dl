@@ -5,13 +5,13 @@ Download and generate *EPUB* of your favourite books from [*Safari Books Online*
 I'm not responsible for the use of this program, which is for *personal* and *educational* purposes only.  
 
 ## Overview:
-  * [EPUB Format]()
-    - [META-INT]()
-    - [mimetype]()
-    - [content.opf]()
+  * [EPUB Format](#epub-format)
+    - [META-INT](#metainf)
+    - [mimetype](#mimetype)
+    - [content.opf](#contentopf)
     
   * [Usage](#usage)
-    - [Program options]()
+    - [Program options](#program-options)
 ## EPUB FORMAT:
 
 The EPUB® format provides a means of representing, packaging and encoding structured and semantically enhanced Web content — including HTML, CSS, SVG and other resources — for distribution in a single-file container.
