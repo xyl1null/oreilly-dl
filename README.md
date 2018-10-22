@@ -6,9 +6,9 @@ I'm not responsible for the use of this program, which is for *personal* and *ed
 
 ## Overview:
   * [EPUB Format](#epub-format)
-    - [META-INT](#metainf)
-    - [mimetype](#mimetype)
-    - [content.opf](#contentopf)
+    - META-INT
+    - mimetype
+    - content.opf
     
   * [Usage](#usage)
     - [Program options](#program-options)
@@ -16,7 +16,7 @@ I'm not responsible for the use of this program, which is for *personal* and *ed
 
 The EPUB® format provides a means of representing, packaging and encoding structured and semantically enhanced Web content — including HTML, CSS, SVG and other resources — for distribution in a single-file container.
   * META-INF
-    - container.xml
+    container.xml
     ```
     <?xml version="1.0" encoding="UTF-8"?>
     <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
