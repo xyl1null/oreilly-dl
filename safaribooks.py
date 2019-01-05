@@ -18,6 +18,9 @@ from urllib.request import urlopen
 PATH = os.path.dirname(os.path.realpath(__file__))
 COOKIES_FILE = os.path.join(PATH, "cookies.json")
 
+SAFARI_BASE_HOST = "learning.oreilly.com"
+SAFARI_BASE_URL = "https://" + SAFARI_BASE_HOST
+
 
 class Display:
     BASE_FORMAT = logging.Formatter(
@@ -145,11 +148,11 @@ class Display:
             )
 
     def done(self, epub_file):
-        self.info("Done: %s\n\n"
+        self.info("Done: %s\n\n" % epub_file +
                   "    If you like it, please * this project on GitHub to make it known:\n"
                   "        https://github.com/lorenzodifuccia/safaribooks\n"
-                  "    And don't forget to renew your Safari Books Online subscription at:\n"
-                  "        https://www.safaribooksonline.com/signup/\n\n" % epub_file +
+                  "    e don't forget to renew your Safari Books Online subscription:\n"
+                  "        " + SAFARI_BASE_URL + "\n\n" +
                   self.SH_BG_RED + "[!]" + self.SH_DEFAULT + " Bye!!")
 
     @staticmethod
@@ -179,6 +182,9 @@ class WinQueue(list):  # TODO: error while use `process` in Windows: can't pickl
 
 class SafariBooks:
 
+    LOGIN_URL = SAFARI_BASE_URL + "/accounts/login/"
+    API_TEMPLATE = SAFARI_BASE_URL + "/api/v1/book/{0}/"
+
     HEADERS = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
         "accept-encoding": "gzip, deflate",
@@ -186,15 +192,12 @@ class SafariBooks:
         "cache-control": "no-cache",
         "cookie": "",
         "pragma": "no-cache",
-        "referer": "https://www.safaribooksonline.com/home/",
+        "origin": SAFARI_BASE_URL,
+        "referer": LOGIN_URL,
         "upgrade-insecure-requests": "1",
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/62.0.3202.94 Safari/537.36"
     }
-
-    BASE_URL = "https://www.safaribooksonline.com"
-    LOGIN_URL = BASE_URL + "/accounts/login/"
-    API_TEMPLATE = BASE_URL + "/api/v1/book/{0}/"
 
     BASE_01_HTML = "<!DOCTYPE html>\n" \
                    "<html lang=\"en\" xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\"" \
@@ -224,12 +227,8 @@ class SafariBooks:
                     "</rootfiles>" \
                     "</container>"
 
-    # cover modified, iBooks supported
-    # "<meta name=\"cover\" content=\"{8}\"/>\n"
-    # "<meta name=\"cover\" content=\"cover-image\"/>\n"
-    # "<item id=\"cover-image\" href=\"{8}\" media-type=\"image/png\" properties=\"cover-image\"/>\n" \
     # Format: ID, Title, Authors, Description, Subjects, Publisher, Rights, Date, CoverId, MANIFEST, SPINE, CoverUrl
-    CONTENT_OPF = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
+    CONTENT_OPF = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" \
                   "<package xmlns=\"http://www.idpf.org/2007/opf\" unique-identifier=\"bookid\" version=\"3.1\" >\n" \
                   "<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\" " \
                   " xmlns:opf=\"http://www.idpf.org/2007/opf\">\n"\
@@ -254,7 +253,7 @@ class SafariBooks:
 
 
     # Format: ID, Depth, Title, Author, NAVMAP
-    TOC_NCX = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
+    TOC_NCX = "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\" ?>" \
               "<!DOCTYPE ncx PUBLIC \"-//NISO//DTD ncx 2005-1//EN\"" \
               " \"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd\">" \
               "<ncx xmlns=\"http://www.daisy.org/z3986/2005/ncx/\" version=\"2005-1\">" \
@@ -369,7 +368,7 @@ class SafariBooks:
         return " ".join(["{0}={1};".format(k, v) for k, v in self.cookies.items()])
 
     def return_headers(self, url):
-        if "safaribooksonline" in urlsplit(url).netloc:
+        if SAFARI_BASE_HOST in urlsplit(url).netloc:
             self.HEADERS["cookie"] = self.return_cookies()
 
         else:
@@ -422,7 +421,7 @@ class SafariBooks:
         return new_cred
 
     def do_login(self, email, password):
-        response = self.requests_provider(self.BASE_URL)
+        response = self.requests_provider(self.LOGIN_URL)
         if response == 0:
             self.display.exit("Login: unable to reach Safari Books Online. Try again...")
 
@@ -446,10 +445,9 @@ class SafariBooks:
             self.LOGIN_URL,
             post=True,
             data=(
-                ("csrfmiddlewaretoken", ""), ("csrfmiddlewaretoken", csrf),
+                ("csrfmiddlewaretoken", csrf),
                 ("email", email), ("password1", password),
-                ("is_login_form", "true"), ("leaveblank", ""),
-                ("dontchange", "http://")
+                ("login", "Sign In"), ("next", "")
             ),
             allow_redirects=False
         )
@@ -536,7 +534,7 @@ class SafariBooks:
 
         root = None
         try:
-            root = html.fromstring(response.text, base_url=self.BASE_URL)
+            root = html.fromstring(response.text, base_url=SAFARI_BASE_URL)
 
         except (html.etree.ParseError, html.etree.ParserError) as parsing_error:
             self.display.error(parsing_error)
@@ -596,7 +594,7 @@ class SafariBooks:
         return None
 
     def parse_html(self, root, first_page=False):
-        if random() > 0.5:
+        if random() > 0.8:
             if len(root.xpath("//div[@class='controls']/a/text()")):
                 self.display.exit(self.display.api_error(" "))
 
@@ -803,7 +801,7 @@ class SafariBooks:
                 self.display.images_ad_info.value = 1
 
         else:
-            response = self.requests_provider(urljoin(self.BASE_URL, url),
+            response = self.requests_provider(urljoin(SAFARI_BASE_URL, url),
                                               update_cookies=False,
                                               stream=True)
             if response == 0:
@@ -1029,17 +1027,17 @@ if __name__ == "__main__":
     arguments.add_argument(
         "bookid", metavar='<BOOK ID>',
         help="Book digits ID that you want to download. You can find it in the URL (X-es):"
-             " `https://www.safaribooksonline.com/library/view/book-name/XXXXXXXXXXXXX/`"
+             " `" + SAFARI_BASE_URL + "/library/view/book-name/XXXXXXXXXXXXX/`"
     )
 
     args_parsed = arguments.parse_args()
 
     if args_parsed.cred:
-        cred = SafariBooks.parse_cred(args_parsed.cred)
-        if not cred:
+        parsed_cred = SafariBooks.parse_cred(args_parsed.cred)
+        if not parsed_cred:
             arguments.error("invalid credential: %s" % args_parsed.cred)
 
-        args_parsed.cred = cred
+        args_parsed.cred = parsed_cred
 
     else:
         if args_parsed.no_cookies:
