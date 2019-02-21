@@ -61,10 +61,10 @@ class Display:
         sys.excepthook = sys.__excepthook__
 
     def log(self, message):
-        self.logger.info(str(message).encode("utf-8", "replace"))
+        self.logger.info(message.encode("utf-8", "replace"))
 
     def out(self, put):
-        sys.stdout.write("\r" + " " * self.columns + "\r" + put + "\n")
+        sys.stdout.write("\r" + " " * self.columns + "\r" + put.encode("utf-8", "replace") + "\n")
 
     def info(self, message, state=False):
         self.log(message)
@@ -208,13 +208,14 @@ class SafariBooks:
                    "<head>\n" \
                    "{0}\n" \
                    "<style type=\"text/css\">" \
-                   "body{{background-color:#fbfbfb!important;margin:1em;}}" \
+                   "body{{margin:1em;}}" \
                    "#sbo-rt-content *{{text-indent:0pt!important;}}#sbo-rt-content .bq{{margin-right:1em!important;}}"
 
-    KINDLE_HTML = "#sbo-rt-content *{{word-wrap:break-word!important;" \
-                  "word-break:break-word!important;}}#sbo-rt-content table,#sbo-rt-content pre" \
-                  "{{overflow-x:unset!important;overflow:unset!important;" \
-                  "overflow-y:unset!important;white-space:pre-wrap!important;}}"
+    KINDLE_HTML = "body{{background-color:transparent!important;}}" \
+	              "#sbo-rt-content *{{word-wrap:break-word!important;" \
+	              "word-break:break-word!important;}}#sbo-rt-content table,#sbo-rt-content pre" \
+	              "{{overflow-x:unset!important;overflow:unset!important;" \
+	              "overflow-y:unset!important;white-space:pre-wrap!important;}}"
 
     BASE_02_HTML = "</style>" \
                    "</head>\n" \
