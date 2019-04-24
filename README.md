@@ -66,7 +66,7 @@ For more info on EPUB, please check [here](http://www.idpf.org/epub3/latest/pack
 ## Usage:
 ```
 $ git clone https://github.com/lorenzodifuccia/safaribooks.git or
-$ git clone https://github.com/shawneau/safaribooks.git
+$ git clone https://github.com/leignshanie/safaribooks.git
 Cloning into 'safaribooks'...
 
 $ cd safaribooks
