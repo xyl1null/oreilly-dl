@@ -848,12 +848,11 @@ class SafariBooks:
                 self.display.info("File `%s` already exists.\n"
                                   "    If you want to download again all the images,\n"
                                   "    please delete the `<BOOK NAME>/OEBPS/*.xhtml` and `<BOOK NAME>/OEBPS/Images/*`"
-                                  " files and restart the program." %
-                                  image_name)
+                                  " files and restart the program." %image_name)
                 self.display.images_ad_info.value = 1
 
         else:
-            start_time = time.time()
+            # start_time = time.time()
             # print("Downloading image from %s\n" % urljoin(SAFARI_BASE_URL, url))
             response = self.requests_provider(urljoin(SAFARI_BASE_URL, url),
                                               update_cookies=False,
@@ -921,10 +920,12 @@ class SafariBooks:
         self.display.state_status.value = -1
 
         for image_url in self.images:
-            if "xhtml" in image_url:
-                self.display.info("incorrect image format in {}, skipped".format(image_url), False)
-            else:
-                self._start_coroutines(self._thread_download_images, image_url)
+            # if "xhtml" in image_url:
+            #     print(image_url)
+            #     self.display.info("Incorrect image format in {}, skipped".format(image_url), False)
+            # else:
+            #     self._start_coroutines(self._thread_download_images, image_url)
+            self._start_coroutines(self._thread_download_images, image_url)
 
         await self._wait_for_connection_finished()
 
