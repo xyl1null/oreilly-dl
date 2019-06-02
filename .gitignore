@@ -3,3 +3,5 @@ Books/
 .DS_Store
 Pipfile
 Pipfile.lock
+*.log
+

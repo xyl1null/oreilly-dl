@@ -20,8 +20,8 @@ import time
 PATH = os.path.dirname(os.path.realpath(__file__))
 COOKIES_FILE = os.path.join(PATH, "cookies.json")
 
-SAFARI_BASE_HOST = "learning.oreilly.com"
-SAFARI_BASE_URL = "https://" + SAFARI_BASE_HOST
+OREILLY_BASE_HOST = "learning.oreilly.com"
+OREILLY_BASE_URL = "https://" + OREILLY_BASE_HOST
 
 
 class Display:
@@ -37,8 +37,7 @@ class Display:
 
     def __init__(self, log_file):
         self.log_file = os.path.join(PATH, log_file)
-
-        self.logger = logging.getLogger("SafariBooks")
+        self.logger = logging.getLogger("OReillyBooks")
         self.logger.setLevel(logging.INFO)
         logs_handler = logging.FileHandler(filename=self.log_file)
         logs_handler.setFormatter(self.BASE_FORMAT)
@@ -47,7 +46,7 @@ class Display:
 
         self.columns, _ = shutil.get_terminal_size()
 
-        self.logger.info("** Welcome to SafariBooks! **")
+        self.logger.info("** Welcome to O\'Reilly Books! **")
 
         self.book_ad_info = False
         self.css_ad_info = Value("i", 0)
@@ -106,13 +105,12 @@ class Display:
 
     def intro(self):
         output = self.SH_YELLOW + """
-       ____     ___         _
-      / __/__ _/ _/__ _____(_)
-     _\ \/ _ `/ _/ _ `/ __/ /
-    /___/\_,_/_/ \_,_/_/ /_/
-      / _ )___  ___  / /__ ___
-     / _  / _ \/ _ \/  '_/(_-<
-    /____/\___/\___/_/\_\/___/
+          ____ _  ___      _ ____         ___  __
+         / __ ( )/ _ \___ (_) / /_ ______/ _ \/ /
+        / /_/ /// , _/ -_) / / / // /___/ // / /__
+        \____/ /_/|_|\__/_/_/_/\_, /   /____/____/
+                              /___/
+
 """ + self.SH_DEFAULT
         output += "\n" + "~" * (self.columns // 2)
 
@@ -154,7 +152,7 @@ class Display:
                   "    If you like it, please * this project on GitHub to make it known:\n"
                   "        https://github.com/lorenzodifuccia/safaribooks\n"
                   "    Don't forget to renew your O\'Reilly Online subscription:\n"
-                  "        " + SAFARI_BASE_URL + "\n\n" +
+                  "        " + OREILLY_BASE_URL + "\n\n" +
                   self.SH_BG_RED + "[!]" + self.SH_DEFAULT + " Cheers!")
 
     @staticmethod
@@ -163,7 +161,7 @@ class Display:
         if "detail" in response and "Not found" in response["detail"]:
             message += "book's not present in O\'Reilly Online.\n" \
                        "    The book identifier is the digits that you can find in the URL:\n" \
-                       "    `" + SAFARI_BASE_URL + "/library/view/book-name/XXXXXXXXXXXXX/`"
+                       "    `" + OREILLY_BASE_URL + "/library/view/book-name/XXXXXXXXXXXXX/`"
 
         else:
             os.remove(COOKIES_FILE)
@@ -182,10 +180,10 @@ class WinQueue(list):  # TODO: error while use `process` in Windows: can't pickl
         return self.__len__()
 
 
-class SafariBooks:
+class OReillyBooks:
 
     LOGIN_URL = "https://www.oreilly.com/member/auth/login/"
-    API_TEMPLATE = SAFARI_BASE_URL + "/api/v1/book/{0}/"
+    API_TEMPLATE = OREILLY_BASE_URL + "/api/v1/book/{0}/"
 
     HEADERS = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -194,7 +192,7 @@ class SafariBooks:
         "cache-control": "no-cache",
         "cookie": "",
         "pragma": "no-cache",
-        "origin": SAFARI_BASE_URL,
+        "origin": OREILLY_BASE_URL,
         "referer": LOGIN_URL,
         "upgrade-insecure-requests": "1",
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -378,7 +376,7 @@ class SafariBooks:
         return " ".join(["{0}={1};".format(k, v) for k, v in self.cookies.items()])
 
     def return_headers(self, url):
-        if SAFARI_BASE_HOST in urlsplit(url).netloc:
+        if OREILLY_BASE_HOST in urlsplit(url).netloc:
             self.HEADERS["cookie"] = self.return_cookies()
 
         else:
@@ -557,7 +555,7 @@ class SafariBooks:
         root = None
 
         try:
-            root = html.fromstring(response.text, base_url=SAFARI_BASE_URL)
+            root = html.fromstring(response.text, base_url=OREILLY_BASE_URL)
 
         except (html.etree.ParseError, html.etree.ParserError) as parsing_error:
             self.display.error(parsing_error)
@@ -853,8 +851,8 @@ class SafariBooks:
 
         else:
             # start_time = time.time()
-            # print("Downloading image from %s\n" % urljoin(SAFARI_BASE_URL, url))
-            response = self.requests_provider(urljoin(SAFARI_BASE_URL, url),
+            # print("Downloading image from %s\n" % urljoin(OREILLY_BASE_URL, url))
+            response = self.requests_provider(urljoin(OREILLY_BASE_URL, url),
                                               update_cookies=False,
                                               stream=True)
             if response == 0:
@@ -864,7 +862,7 @@ class SafariBooks:
                     for chunk in response.iter_content(1024):
                         img.write(chunk)
 
-            # print("downloading %s is done, takes %d seconds\n" % (urljoin(SAFARI_BASE_URL, url), time.time() - start_time))
+            # print("downloading %s is done, takes %d seconds\n" % (urljoin(OREILLY_BASE_URL, url), time.time() - start_time))
 
         self.images_done_queue.put(1)
         self.display.state(len(self.images), self.images_done_queue.qsize())
@@ -1014,7 +1012,7 @@ class SafariBooks:
                  )
 
             if cc["children"]:
-                sr, c, mx = SafariBooks.parse_toc(cc["children"], c, mx)
+                sr, c, mx = OReillyBooks.parse_toc(cc["children"], c, mx)
                 r += sr
 
             r += "</navPoint>\n"
@@ -1091,7 +1089,7 @@ class SafariBooks:
 
 # MAIN
 if __name__ == "__main__":
-    arguments = argparse.ArgumentParser(prog="safaribooks.py",
+    arguments = argparse.ArgumentParser(prog="oreilly-dl.py",
                                         description="Download and generate an EPUB of your favorite books"
                                                     " from O\'Reilly Online.",
                                         add_help=False,
@@ -1119,13 +1117,13 @@ if __name__ == "__main__":
     arguments.add_argument(
         "bookid", metavar='<BOOK ID>',
         help="Book digits ID that you want to download. You can find it in the URL (X-es):"
-             " `" + SAFARI_BASE_URL + "/library/view/book-name/XXXXXXXXXXXXX/`"
+             " `" + OREILLY_BASE_URL + "/library/view/book-name/XXXXXXXXXXXXX/`"
     )
 
     args_parsed = arguments.parse_args()
 
     if args_parsed.cred:
-        parsed_cred = SafariBooks.parse_cred(args_parsed.cred)
+        parsed_cred = OReillyBooks.parse_cred(args_parsed.cred)
         if not parsed_cred:
             arguments.error("invalid credential: %s" % args_parsed.cred)
 
@@ -1135,4 +1133,4 @@ if __name__ == "__main__":
         if args_parsed.no_cookies:
             arguments.error("invalid option: `--no-cookies` is valid only if you use the `--cred` option")
 
-    SafariBooks(args_parsed)
+    OReillyBooks(args_parsed)
