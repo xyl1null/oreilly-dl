@@ -1,8 +1,8 @@
-# SafariBooks
+# OReilly-DL
 This is a fork from lorenzodifuccia's [repo](https://github.com/lorenzodifuccia/safaribooks).
 
-Download and generate *EPUB* of your favourite books from [*Safari Books Online*](https://www.safaribooksonline.com).  
-I'm not responsible for the use of this program, which is for *personal* and *educational* purposes only.  
+Download and generate *EPUB* of your favourite books from [*O'Reilly Books Online*](https://learning.oreilly.com/).  
+I'm not responsible for the use of this programme, which is for *personal* and *educational* purposes only.  
 
 ## Overview:
   * [EPUB Format](#epub-format)
@@ -10,7 +10,7 @@ I'm not responsible for the use of this program, which is for *personal* and *ed
     - mimetype
     - content.opf
   * [Usage](#usage)
-    - [Program options](#program-options)
+    - [Programme options](#programme-options)
 ## EPUB FORMAT:
 
 The EPUB® format provides a means of representing, packaging and encoding structured and semantically enhanced Web content — including HTML, CSS, SVG and other resources — for distribution in a single-file container.
@@ -66,26 +66,26 @@ For more info on EPUB, please check [here](http://www.idpf.org/epub3/latest/pack
 ## Usage:
 ```
 $ git clone https://github.com/lorenzodifuccia/safaribooks.git or
-$ git clone https://github.com/leignshanie/safaribooks.git
-Cloning into 'safaribooks'...
+$ git clone https://github.com/leignshanie/oreilly-dl.git
+Cloning into 'oreilly-dl'...
 
-$ cd safaribooks
+$ cd oreilly-dl
 $ pip3 install -r requirements.txt
 
 ```
-#### Program options:
+#### Programme options:
 ```
-$ python3 safaribooks.py --help
-usage: safaribooks.py [--cred <EMAIL:PASS>] [--no-cookies] [--no-kindle]
+$ python3 oreilly-dl.py --help
+usage: oreilly-dl.py [--cred <EMAIL:PASS>] [--no-cookies] [--no-kindle]
                       [--preserve-log] [--help]
                       <BOOK ID>
 
-Download and generate EPUB of your favorite books from Safari Books Online.
+Download and generate EPUB of your favourite books from O'Reilly Books.
 
 positional arguments:
   <BOOK ID>            Book digits ID that you want to download.
                        You can find it in the URL (X-es):
-                       `https://www.safaribooksonline.com/library/view/book-
+                       `https://learning.oreilly.com/library/view/book-
                        name/XXXXXXXXXXXXX/`
 
 optional arguments:
@@ -97,25 +97,25 @@ optional arguments:
   --no-kindle          Remove some CSS rules that block overflow on `table`
                        and `pre` elements. Use this option if you're not going
                        to export the EPUB to E-Readers like Amazon Kindle.
-  --preserve-log       Leave the `info_XXXXXXXXXXXXX.log` file even if there 
+  --preserve-log       Leave the `info_XXXXXXXXXXXXX.log` file even if there
                        isn't any error.
   --help               Show this help message.
 ```
 
-For the first time users, you'll have to specify your SafariBooksOnline account credentials, which is in the format of   
+For the first time users, you'll have to specify your O'Reilly Books Online account credentials, which is in the format of   
 ```
-$ python3 safaribooks.py --cred "account@email.com:password" XXXXXXXXXXXXX
+$ python3 oreilly-dl.py --cred "account@email.com:password" XXXXXXXXXXXXX
 ```
   * Xs indicate the 13-digit ISBN number, which is available in the Book url, e.g.
-       `https://www.safaribooksonline.com/library/view/how_to_build_a_harem/6666666666666/`
+       `https://learning.oreilly.com/library/view/how_to_build_a_harem/6666666666666/`
     *Notice* Sometimes ISBN in the book description page doesn't correspond to the url, so always trust the latter.
-  * `email:password` with your own. 
-    *Notice* Use a combination of alphanumerical characters. 
- 
+  * `email:password` with your own.
+    *Notice* Use a combination of alphanumerical characters.
+
 Later, you're free to omit the --cred inputs using:
 ```
-$ python3 safaribooks.py XXXXXXXXXXXXX
+$ python3 oreilly-dl.py XXXXXXXXXXXXX
 ```
 ---  
-  
+
 ## Cheers!
