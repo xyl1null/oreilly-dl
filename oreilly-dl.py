@@ -183,6 +183,7 @@ class WinQueue(list):  # TODO: error while use `process` in Windows: can't pickl
 class OReillyBooks:
 
     LOGIN_URL = "https://www.oreilly.com/member/auth/login/"
+    LOGIN_ENTRY_URL = OREILLY_BASE_URL + "/login/unified/?next=/home/"
     API_TEMPLATE = OREILLY_BASE_URL + "/api/v1/book/{0}/"
 
     HEADERS = {
@@ -193,7 +194,7 @@ class OReillyBooks:
         "cookie": "",
         "pragma": "no-cache",
         "origin": OREILLY_BASE_URL,
-        "referer": LOGIN_URL,
+        "referer": LOGIN_ENTRY_URL,
         "upgrade-insecure-requests": "1",
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/62.0.3202.94 Safari/537.36"
@@ -274,11 +275,11 @@ class OReillyBooks:
         self.display.intro()
 
         self.cookies = {}
+        self.jwt = {}
 
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=30)
         self.loop = asyncio.get_event_loop()
         self.connection_futures = []
-        self.session = None
 
         if not args.cred:
             if not os.path.isfile(COOKIES_FILE):
@@ -336,21 +337,6 @@ class OReillyBooks:
         self.chapter_done_queue = Queue(0) if "win" not in sys.platform else WinQueue()
         self.loop.run_until_complete(self.get_async())
 
-        # if not self.cover:
-        #     self.cover = self.get_default_cover()
-        #     cover_html = self.parse_html(
-        #         html.fromstring("<div id=\"sbo-rt-content\"><img src=\"Images/{0}\"></div>".format(self.cover)), True
-        #     )
-        #
-        #     self.book_chapters = [{
-        #         "filename": "cover.xhtml",
-        #         "title": "Cover"
-        #     }] + self.book_chapters
-        #
-        #     self.filename = self.book_chapters[0]["filename"]
-        #     self.save_page_html(cover_html)
-
-
         self.css_done_queue = Queue(0) if "win" not in sys.platform else WinQueue()
         self.display.info("Downloading book CSSs... (%s files)" % len(self.css), state=True)
         self.loop.run_until_complete(self.collect_css_async())
@@ -390,15 +376,13 @@ class OReillyBooks:
                 cookie.name: cookie.value
             })
 
-    def requests_provider(self, url, post=False, data=None, update_cookies=True, **kwargs):
+    def requests_provider(self, url, post=False, data=None, perform_redirect=True, update_cookies=True, update_referer=True, **kwargs):
         try:
-            if not self.session:
-                self.get_session(data=data)
-
-            response = getattr(self.session, "post" if post else "get")(
+            response = getattr(requests, "post" if post else "get")(
                 url,
-
+                headers=self.return_headers(url),
                 data=data,
+                allow_redirects=False,
                 **kwargs
             )
 
@@ -415,32 +399,16 @@ class OReillyBooks:
         if update_cookies:
             self.update_cookies(response.cookies)
 
+        if update_referer:
+            # TODO Update Referer HTTP Header
+            # TODO How about Origin? 
+            self.HEADERS["referer"] = response.request.url
+
+        if response.is_redirect and perform_redirect:
+            return self.requests_provider(response.next.url, post, None, perform_redirect, update_cookies, update_referer)
+            # TODO How about **kwargs?
+
         return response
-
-    def get_login_header(self):
-        return {"content-type": "application/json"}
-
-    def get_session(self, data=None):
-        try:
-            s = requests.Session()
-            s.data = data
-            s.headers = self.get_login_header()
-            login_response = s.post(self.LOGIN_URL,
-                                    data=data,
-                                    )
-
-            if login_response.status_code >= 400:
-                self.display.error("cannot login, reason: %s" % login_response.content)
-                return 0
-            else:
-                s.get(json.loads(login_response.content)['redirect_uri'])
-                self.session = s
-
-        except (requests.ConnectionError, requests.ConnectTimeout, requests.RequestException) as request_exception:
-            self.display.error(str(request_exception))
-            return 0
-        return True
-
 
     @staticmethod
     def parse_cred(cred):
@@ -457,11 +425,24 @@ class OReillyBooks:
         return new_cred
 
     def do_login(self, email, password):
+        response = self.requests_provider(self.LOGIN_ENTRY_URL)
+        if response == 0:
+            self.display.exit("Login: unable to reach O\'Reilly Books Online. Try again...")
+
+        redirect_uri = response.request.path_url[response.request.path_url.index("redirect_uri"):]  # TODO try...catch
+        redirect_uri = redirect_uri[:redirect_uri.index("&")]
+        redirect_uri = "https://api.oreilly.com%2Fapi%2Fv1%2Fauth%2Fopenid%2Fauthorize%3F" + redirect_uri
+
         response = self.requests_provider(
             self.LOGIN_URL,
             post=True,
-            data=json.dumps({"email": email, "password": str(password)}),
-            )
+            json={
+                "email": email,
+                "password": password,
+                "redirect_uri": redirect_uri
+            },
+            perform_redirect=False
+        )
 
         if response == 0:
             self.display.exit("Login: unable to perform auth to O\'Reilly Online.\n    Try again...")
@@ -484,6 +465,12 @@ class OReillyBooks:
                     "Login: your login went wrong and it encountered in an error"
                     " trying to parse the login details of O\'Reilly Online. Try again..."
                 )
+
+        self.jwt = response.json()  # TODO: save JWT Tokens and use the refresh_token to restore user session
+        response = self.requests_provider(self.jwt["redirect_uri"])
+        if response == 0:
+            self.display.exit("Login: unable to reach O\'Reilly Books Online. Try again...")
+
 
     def get_book_info(self):
         response = self.requests_provider(self.api_url)
@@ -522,19 +509,6 @@ class OReillyBooks:
 
         result += response["results"]
         return result + (self.get_book_chapters(page + 1) if response["next"] else [])
-
-    # def get_default_cover(self):
-    #     response = self.requests_provider(self.book_info["cover"], update_cookies=False, stream=True)
-    #     if response == 0:
-    #         self.display.error("Error trying to retrieve the cover: %s" % self.book_info["cover"])
-    #         return False
-    #
-    #     file_ext = response.headers["Content-Type"].split("/")[-1]
-    #     with open(os.path.join(self.images_path, "default_cover." + file_ext), 'wb') as i:
-    #         for chunk in response.iter_content(1024):
-    #             i.write(chunk)
-    #
-    #     return "default_cover." + file_ext
 
     def get_html(self, url, filename, chapter_title, retry=0):
 
@@ -614,7 +588,6 @@ class OReillyBooks:
 
         return None
 
-    # !!! chapter_title !!!
     def parse_html(self, root, chapter_title, first_page=False):
         if random() > 0.8:
             if len(root.xpath("//div[@class='controls']/a/text()")):
@@ -781,6 +754,7 @@ class OReillyBooks:
 
         else:
             html = self.get_html(next_chapter["web_url"], filename, chapter_title)
+
             content = self.parse_html(html, chapter_title, first_page)
             self.save_page_html(filename, content)
 
@@ -1096,7 +1070,7 @@ if __name__ == "__main__":
                                         allow_abbrev=False)
 
     arguments.add_argument(
-        "--cred", metavar="<EMAIL:PASS>",
+        "--cred", metavar="<EMAIL:PASS>", default=False,
         help="Credentials used to perform the auth login on O\'Reilly Online."
              " Es. ` --cred \"account_mail@mail.com:password01\" `."
     )
