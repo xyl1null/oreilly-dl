@@ -3,7 +3,7 @@ This is a fork from lorenzodifuccia's [repo](https://github.com/lorenzodifuccia/
 
 Download and generate *EPUB* of your favourite book from [*O'Reilly Books Online*](https://learning.oreilly.com/).  
 I'm not responsible for the use of this programme, which is for *personal* and *educational* purposes only.  
-Note that I've merged many PRs that work like magic but also performed some twerks without thoughtful considerations, thus it may present buggy issues and few pesticide could mitigate.
+Note that I've merged many PRs that work like magic but also performed some tweaks without thoughtful considerations, thus it may present buggy issues and few pesticide could mitigate.
 
 ## Overview:
   * [EPUB Format](#epub-format)
